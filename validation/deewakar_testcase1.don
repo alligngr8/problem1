@@ -1,0 +1,189 @@
+=***********************************************************************
+=***********************************************************************
+
+=                     Cavitee entrainee 2D - Re=1000
+
+=***********************************************************************
+=***********************************************************************
+
+
+========================================================================
+============================ GEOMETRIE =================================
+========================================================================
+
+------------------------------------------------------------------------
+-                     DEFINITION DU TYPE DE MAILLAGE 
+------------------------------------------------------------------------
+CALCUL 2D CARTESIEN
+
+------------------------------------------------------------------------
+-                      DIMENSIONS DU DOMAINE PHYSIQUE
+------------------------------------------------------------------------
+- domain is defined as 1 by 1 
+DIM_MIN   0.D0    0.0D0 
+DIM_MAX   1.D0    1.D0 
+
+------------------------------------------------------------------------
+-                              GRILLE 
+------------------------------------------------------------------------
+-MAILLAGE 8 8
+-MAILLAGE 16 16
+-MAILLAGE 32   32
+-MAILLAGE 64 64
+MAILLAGE 128 128
+-MAILLAGE 256 256
+-MAILLAGE 512 512
+-MAILLAGE 1024 1024
+-GRILLE   CONSTANTE
+GRILLE   CHEBI
+
+========================================================================
+============================ EQUATIONS =================================
+========================================================================
+
+------------------------------------------------------------------------
+-                         EQUATIONS RESOLUES
+------------------------------------------------------------------------
+NAVIER         OUI
+- add energy equation
+ENERGIE        OUI 
+compressible_non_conservatif oui
+LOI_ETAT OUI
+-HELMHOLTZ OUI
+
+------------------------------------------------------------------------
+-                              FLUIDE
+------------------------------------------------------------------------
+FLUIDE AIR
+
+------------------------------------------------------------------------
+-                        CONDITIONS AUX LIMITES
+------------------------------------------------------------------------
+-boundary condition for velocity
+LIMITE VITESSE GAUCHE    PAROI
+LIMITE VITESSE DROITE    PAROI
+LIMITE VITESSE SUP       PAROI
+
+- How to specify in the form of gradient of temperature is 0.
+LIMITE VITESSE INF       ENTREE	0.01D0
+
+-boundary condition for Temperature
+- since adiabtaic is gradient of 
+LIMITE TEMPERATURE GAUCHE   ADIABATIQUE 
+LIMITE TEMPERATURE DROITE   ADIABATIQUE
+LIMITE TEMPERATURE SUP      ADIABATIQUE 
+LIMITE TEMPERATURE INF      ADIABATIQUE
+
+INITIALISE TEMPERATURE DOMAINE VAL 300.D0
+
+-boundary condition for Pressure
+
+-LIMITE pression GAUCHE   NEUMANN 
+-LIMITE pression DROITE   NEUMANN 
+-LIMITE pression SUP      NEUMANN 
+-LIMITE pression INF      NEUMANN     
+-CONSTANTINE 101325.D0
+
+INITIALISE PRESSION DOMAINE VAL 101325.D0
+
+========================================================================
+=========================== PARAMETRES NUMERIQUES ======================
+========================================================================
+
+------------------------------------------------------------------------
+-                           PARAMETRES TEMPORELS
+------------------------------------------------------------------------
+ITERATION  TEMPS   50
+
+------------------------------------------------------------------------
+-                         PARAMETRES NAVIERIER-STOKES
+------------------------------------------------------------------------
+PAS_DE_TEMPS  NAVIER    1.D0
+
+METHODE       NAVIER      LAGRANGIEN
+-PROJECTION_VECTORIELLE OUI
+
+- query what is motrice here??
+
+-PRESSION      MOTRICE
+
+ITERATION  LAGRANGIEN  1
+
+- query : what is dpdr here?
+
+PARAMETRE  DPDR        1.D0
+
+SCHEMA  NAVIER       CENTRE
+-SCHEMA  NAVIER       THETA
+-SCHEMA  NAVIER       QUICK
+-SCHEMA  NAVIER       DOUBLE
+
+SOLVEUR   NAVIER     MUMPS
+
+-SOLVEUR NAVIER     BICG
+PRECONDITIONNEMENT NAVIER  ILU
+ITERATION  BICG  NAVIER       30
+ITERATION  BICG  PROJECTION   10
+RESIDU           PROJECTION   1.D-15
+RESIDU           NAVIER       1.D-15
+
+------------------------------------------------------------------------
+-                         PARAMETRES ENERGIE
+------------------------------------------------------------------------
+PAS_DE_TEMPS  ENERGIE   1.D0
+
+SCHEMA  ENERGIE    CENTRE
+-SCHEMA  ENERGIE    HYBRIDE
+-SCHEMA  ENERGIE    UPWIND
+-SCHEMA  ENERGIE    QUICK
+-SCHEMA  ENERGIE    DOUBLE
+-SCHEMA  ENERGIE    TVD
+-SCHEMA  ENERGIE    WENO
+
+ITERATION  BICG  ENERGIE     30
+RESIDU           ENERGIE      1.D-13
+
+SOLVEUR  ENERGIE   MUMPS
+-SOLVEUR  ENERGIE    BICG
+PRECONDITIONNEMENT  ENERGIE  JACOBI
+
+========================================================================
+============================== UTILITAIRES =============================
+========================================================================
+
+------------------------------------------------------------------------
+-                             TESTS D'ARRETS
+------------------------------------------------------------------------
+TEST_ARRET      OUI   FREQUENCE 10
+TOLERANCE_INCOMPRESSIBILITE     1.D-13
+TOLERANCE_STATIONNARITE         1.D-13
+ARRET VITESSE
+-ARRET INCOMPRESSIBLE
+
+------------------------------------------------------------------------
+-                              IMPRESSION 
+------------------------------------------------------------------------
+IMPRESSION     TECPLOT 
+IMPRESSION     THETIS 
+IMPRESSION FREQUENCE 10.
+
+IMPRIME  VITESSE         
+IMPRIME  PRESSION  
+IMPRIME  TEMPERATURE      
+IMPRIME  MASSE
+-IMPRIME  FCT_COUR        
+-IMPRIME  ROTATIONNEL 
+-IMPRIME  DIVERGENCE
+-IMPRIME  PSI
+
+-IMPRESSION COUPE PT1  0.5D0  0.D0   PT2  0.5D0  1.D0  ADIM NON DECAL NON
+-IMPRESSION COUPE PT1  0.D0   0.5D0  PT2  1.D0   0.5D0 ADIM NON DECAL NON
+
+--------------------------------------------------------------------------------
+- ADIMENSIONNEMENT
+--------------------------------------------------------------------------------
+-DEBUG  OUI
+-CAVITE                   OUI
+ENERGIE_CINETIQUE_TOTALE OUI
+VALIDATION  UTILITAIRE ENERGIE_CINETIQUE_TOTALE  VALEUR_REF 0.435746671408881E-01 PRECISION 1.D-10
+
