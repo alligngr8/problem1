@@ -371,7 +371,7 @@ contains
 		allocate(new_term(kkt))
 		  
 		call diverge(vts,diverge_V,scalar)
-		new_term=(beg*tep)*diverge_V*(1./xit)
+		new_term=(beg*tep)*diverge_V*(1.d0/xit)
 		smt=smt - new_term
 		  
 	  ! end if 
@@ -831,6 +831,12 @@ contains
 
     !-------------------------------------------------------------------------------
     !desallocation
+
+    !################################################################################
+    deallocate(diverge_V)
+    deallocate(new_term)
+
+    !##################################################################################
     !-------------------------------------------------------------------------------
     if (psm%penv) then
        vts=vts2

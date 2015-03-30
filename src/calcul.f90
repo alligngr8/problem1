@@ -208,12 +208,16 @@ subroutine calcul
   double precision,  dimension(:,:), allocatable :: vtspp
   double precision :: norv
   !-------------------------------------------------------------------------------
-
+ 
+  !#################################################################################
   ! Deewakar Variables
   ! How to give R by reading from .don file
 	
-  double precision :: Gas_constant_air
+  double precision :: Gas_constant_air, integr,integr2,integr3,VolVol ! Iteger is rho overall, Integr2 press overall ,Integr3 is temp total
+  double precision,	dimension (:), allocatable :: voll  ! volume defined as KKT 
   Gas_constant_air=287.D0
+  
+  !#################################################################################
 
   !===============================================================================
   !fin des declarations
@@ -455,13 +459,28 @@ subroutine calcul
   if (is_turbulence.and.turbulence_modele==turbulence_modele_les) &
        call viscosite_les(vit,vts,vim,cou,pro,turbulence,navier,mpips,typnt,&
        typlv,jpent,jpenv)
-
+   
+  !#################################################################################
   ! Deewakar : All the thermophysical properties are calculated here
+  !#################################################################################
 
   call caracteristiques_thermophys(pre,tep,rho,rho0,rov,rov0,vim,vil,vik,vic,vir,&
        esp,com,com0,cot,cot0,cal,cal0,xit,xiv,beg,rcp,cou,dism,bik,kin,boo,ton,pep, &
        pep0,per,per0,por,pov,cpep,loiper,loiperv,vit,ret,frs,&
        compliq,difc,dfvc,milieut,milieuv,milieuc,jpeno)
+
+  !#################################################################################
+  ! Deewakar Changes : interpolation of KKV to KKT for first iteration
+      ! Deewakar Equations Modified
+      !rho=(pre+101325.d0)/(Gas_constant_air*tep)
+     ! beg=1.0/tep
+      !xit=1/(pre+101325.d0)
+
+
+  CALL INTERPOLATIONS (XIT,XIV,XIT_LIN,XIT_GEOM)
+  CALL INTERPOLATIONS (RHO,ROV,RHO_LIN,RHO_GEOM)
+  !#################################################################################
+
   !initialisation de la pression
   !=> ici plutot que dans prens (prepa.f90) car peut dependre de la masse volumique
   if (iteration_temps==0.and.is_navier) then
@@ -532,7 +551,13 @@ subroutine calcul
 
   !*******************************************************************************
   !boucle en temps   
+
+  !#################################################################################
   ! Deewakar : Begining of iteration in time
+
+  !#################################################################################
+
+  
   !*******************************************************************************
   do while (iteration_temps<iterations_temps_max)
      !*******************************************************************************
@@ -580,7 +605,7 @@ subroutine calcul
         !-------------------------------------------------------------------------------
      endif
      !------------------------------------------------------------------------------- 
-
+!print *, iteration_temps, maxval(pre)
 !!$  call intervitesse (vts,vtspp)
 !!$  norv=0.d0
 !!$  do ltp=1,kkt
@@ -596,6 +621,8 @@ subroutine calcul
      if (is_energie .and.&
           iteration_temps>=energie%activation%debut .and. &
           iteration_temps<=energie%activation%fin) then
+
+        !print *,cal
         !-------------------------------------------------------------------------------
         call resolution_energie(tep,rho,vts,smc,smd,smcr,tp0,tp1,tin,cal,ent,ent0,ent1, &
              vim,pep,rcp,rov,com,cot,frs,cou,esp,compliq,bcoeft,jpent,typlt,&
@@ -680,17 +707,27 @@ subroutine calcul
           call viscosite_les (vit,vts,vim,cou,pro,turbulence,navier,mpips,typnt,&
           typlv,jpent,jpenv)
      !-------------------------------------------------------------------------------
+
+    !#################################################################################
      ! Deewakar Comment : Thermophysical properties are calculated for next iteration here
      call caracteristiques_thermophys(pre,tep,rho,rho0,rov,rov0,vim,vil,vik,vic,vir,&
        esp,com,com0,cot,cot0,cal,cal0,xit,xiv,beg,rcp,cou,dism,bik,kin,boo,ton,pep, &
        pep0,per,per0,por,pov,cpep,loiper,loiperv,vit,ret,frs,&
        compliq,difc,dfvc,milieut,milieuv,milieuc,jpeno)
-     !===============================================================================
+
+     ! Interpolating the values to be used for next iteration
+          
      
      ! Deewakar Equations Modified
-      !rho=(pre+101325.)/(Gas_constant_air*tep)
-      !beg=1.0/tep
-     ! xit=1/(pre+101325.)
+
+      rho=(pre+101325.d0)/( Gas_constant_air*tep)
+      beg=1.d0/tep
+      xit=1.d0/(pre+101325.d0)
+
+     CALL INTERPOLATIONS (XIT,XIV,XIT_LIN,XIT_GEOM)
+     CALL INTERPOLATIONS (RHO,ROV,RHO_LIN,RHO_GEOM)
+
+     !#################################################################################
 
      !===============================================================================
      !utilitaires
@@ -801,7 +838,33 @@ subroutine calcul
      !call flush(imp)
      !call flush(ifih2)
      !===============================================================================
+      
+     !#################################################################################
+     ! Deewakar Printing the values after each time step
+      
+     !Calculating volume at each time step
 
+     CALL INITIALISE(VOLL,KKT)
+     call VOLUME_LOCAL(VOLL)
+
+      		VolVol=0.D0
+      		DO LTP=1,KKT
+       			Volvol=Volvol+VOLL(LTP)
+      		ENDDO
+       	
+     CALL MPIINTEGRALE(RHO,INTEGR) 
+     CALL MPIINTEGRALE(PRE,INTEGR2)  
+     CALL MPIINTEGRALE(TEP,INTEGR3)  
+      
+      400 FORMAT(f20.12,5X,f20.12,5X,f20.12,5X,f20.12) 
+     
+    WRITE(1001,400)iteration_temps*navier%pas_de_temps,INTEGR/VolVol,(INTEGR2)/VolVol,INTEGR3/VolVol 
+    
+    WRITE(*,400)iteration_temps*navier%pas_de_temps,INTEGR/VolVol,(INTEGR2)/VolVol,INTEGR3/VolVol 
+   
+      
+     
+     !#################################################################################
 
 
      !*******************************************************************************
@@ -809,7 +872,13 @@ subroutine calcul
      !*******************************************************************************
   enddo
   !*******************************************************************************
-  ! ENd of Iteration
+
+
+  !#################################################################################
+  ! Deewakar Comments:  End of Iteration
+  !!#################################################################################
+
+
 
   !===============================================================================
   if (utilitaires%is_test_perf) then

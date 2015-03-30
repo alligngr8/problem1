@@ -28,9 +28,9 @@ DIM_MAX   1.D0    1.D0
 ------------------------------------------------------------------------
 -MAILLAGE 8 8
 -MAILLAGE 16 16
--MAILLAGE 32   32
+MAILLAGE 32   32
 -MAILLAGE 64 64
-MAILLAGE 128 128
+-MAILLAGE 128 128
 -MAILLAGE 256 256
 -MAILLAGE 512 512
 -MAILLAGE 1024 1024
@@ -48,7 +48,7 @@ NAVIER         OUI
 - add energy equation
 ENERGIE        OUI 
 compressible_non_conservatif oui
-LOI_ETAT OUI
+-LOI_ETAT OUI
 -HELMHOLTZ OUI
 
 ------------------------------------------------------------------------
@@ -84,7 +84,7 @@ INITIALISE TEMPERATURE DOMAINE VAL 300.D0
 -LIMITE pression INF      NEUMANN     
 -CONSTANTINE 101325.D0
 
-INITIALISE PRESSION DOMAINE VAL 101325.D0
+-INITIALISE PRESSION DOMAINE VAL 101325.D0
 
 ========================================================================
 =========================== PARAMETRES NUMERIQUES ======================
@@ -93,12 +93,12 @@ INITIALISE PRESSION DOMAINE VAL 101325.D0
 ------------------------------------------------------------------------
 -                           PARAMETRES TEMPORELS
 ------------------------------------------------------------------------
-ITERATION  TEMPS   50
+ITERATION  TEMPS   500
 
 ------------------------------------------------------------------------
 -                         PARAMETRES NAVIERIER-STOKES
 ------------------------------------------------------------------------
-PAS_DE_TEMPS  NAVIER    1.D0
+PAS_DE_TEMPS  NAVIER    1.D-1
 
 METHODE       NAVIER      LAGRANGIEN
 -PROJECTION_VECTORIELLE OUI
@@ -130,7 +130,7 @@ RESIDU           NAVIER       1.D-15
 ------------------------------------------------------------------------
 -                         PARAMETRES ENERGIE
 ------------------------------------------------------------------------
-PAS_DE_TEMPS  ENERGIE   1.D0
+PAS_DE_TEMPS  ENERGIE   1.D-1
 
 SCHEMA  ENERGIE    CENTRE
 -SCHEMA  ENERGIE    HYBRIDE
@@ -165,7 +165,7 @@ ARRET VITESSE
 ------------------------------------------------------------------------
 IMPRESSION     TECPLOT 
 IMPRESSION     THETIS 
-IMPRESSION FREQUENCE 10.
+IMPRESSION FREQUENCE 50.
 
 IMPRIME  VITESSE         
 IMPRIME  PRESSION  

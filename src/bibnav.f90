@@ -400,7 +400,7 @@ contains
 		term1=1./xit
 		numerator=((beg)**2)*tep
 		denominator=(rho)*cal*((xit)**2)
-		call diverge(vts,diverge_V,scalar)   
+		!call diverge(vts,diverge_V,scalar)   
 		
 		rep_new=navier%pas_de_temps*(term1+(numerator/denominator)) !*diverge_V ! remove div V
 		
@@ -416,6 +416,7 @@ contains
 		call diverge(flux,diverge_flux,scalar)
 		add_smt=(beg*diverge_flux)/(rho*cal*xit)
 		
+		!print *,'max val of xit an dbeg', maxval(xit),maxval(beg)
 		!rep_new=rep_new-add_smt
        !-------------------------------------------------------------------------------
        ! remplissage de la matrice
@@ -644,7 +645,7 @@ contains
 	   !------------------------------------------------------------------------------
 	   ! Deewakar change pressure
 	   
-	    rep=rep_new ! includes the compressibility as well as thermal effect as per the desired setting of rep_new .
+	   rep=rep_new ! includes the compressibility as well as thermal effect as per the desired setting of rep_new .
 					!This will be passed below as rep.
        !-------------------------------------------------------------------------------
        if (navier%methode_type==navier_methode_lagrangien) then
